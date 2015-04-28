@@ -1,0 +1,17 @@
+{% load i18n %}
+{% url 'registration_activate' activation_key as activation_key_url%}
+{% blocktrans with sitename=site.name siteurl=site.domain %}
+Dies ist die Email, mit der Du Deinen Account bei {{ sitename }} aktivieren
+kannst. (Wenn Du keinen Account bei {{ sitename }} angefordert hast oder
+anlegen möchtest, dann ignoriere diese Email einfach; Deine Email-Adresse
+wird dann in Kürze aus unserer Datenbank gelöscht.)
+
+Um den Zugang zu aktivieren klicke innerhalb der nächsten {{ expiration_days }} Tage
+auf den folgenden Link:
+
+http://{{ siteurl }}{{ activation_key_url }}
+
+Viele Grüße
+
+{{ sitename }}
+{% endblocktrans %}

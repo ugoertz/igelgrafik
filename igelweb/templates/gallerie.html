@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load staticfiles %}
+{% load markup_tags %}
+
+{% block titel %}{% trans "Gallerie" %}{% endblock %}
+
+{% block head %}
+<script type="text/javascript" src="{% static "js/jquery.stickytabs.js" %}"></script>
+<script type="text/javascript">
+$(document).ready(function() {
+  $('#tabs a:first').tab('show')
+  $('.nav-tabs-sticky').stickyTabs();
+});
+</script>
+{% endblock %}
+
+
+{% block content %}
+
+
+<ul id="tabs" class="nav nav-tabs nav-tabs-sticky" data-tabs="tabs">
+{% for cat in categories %}
+<li><a href="#{{ cat.slug }}" data-toggle="tab">{{ cat.title }}</a></li>
+{% endfor %}
+</ul>
+<div id="my-tab-content" class="tab-content">
+{% for cat in categories %}
+<div class="tab-pane" id="{{ cat.slug }}">
+<h1>{{ cat.title }}</h1>
+<div class="row">
+{{ cat.intro|apply_markup:"textile" }}
+</div>
+
+{% for beispiel in cat.beispiel_set.all  %}
+{% if forloop.counter0|divisibleby:4 %}<div class="row" style="margin-bottom:20px;">{% endif %}
+    <div class="col-md-3">
+        <a href="/beispiel/{{ beispiel.id }}/">
+            <img style="border:1px solid gray;" src="{{ beispiel.thumbnail.url }}">
+        </a>
+        <h4><a href="/beispiel/{{ beispiel.id }}/">
+                {{ beispiel.titel}}
+        </a></h4>
+        <p>{{ beispiel.autor|apply_markup:"textile" }}</p>
+    </div>
+{% if forloop.counter|divisibleby:4 %}</div>{% endif %}
+{% endfor %}
+{% if not cat.beispiel_set.count|divisibleby:4 %}</div>{% endif %}
+
+<div class="row">
+{{ cat.details|apply_markup:"textile" }}
+</div>
+</div>
+{% endfor %}
+</div>
+
+
+{% endblock %}
+

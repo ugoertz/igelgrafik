@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Kontaktformular</h2>
+
+<form method="post" action="">
+    {% csrf_token %}
+
+<table width=650>
+{% for field in form %}
+{% if field.help_text %}<tr><td colspan="2"><div class="helptext">{{ field.help_text }}</div></td></tr>{% endif %}
+<tr>
+<td valign="top">{{ field.label_tag }}</td>
+<td>{{ field }}</td>
+{% if field.errors %}</tr><tr><td colspan="2" class="errorlist">{{ field.errors }}</td>{% endif %}
+</tr>
+{% endfor %}
+</table>
+<p style="margin-top:20px;">
+<input type="submit" class="btton" value="Abschicken"></p>
+</form>
+
+{% endblock %}
+

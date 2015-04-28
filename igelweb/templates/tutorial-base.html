@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block head %}
+<link rel="stylesheet" media="all" href="{{ STATIC_URL }}css/docco.css" />
+
+<script type="text/javascript">
+$(document).ready(function () {
+        $('pre:empty').remove();
+
+        });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="pull-right">
+        <a href="/igel/{{ typ }}/{{ kapitel.id }}/" class="btn btn-default pull-right">Ausprobieren ...</a>
+    </div>
+</div>
+<div class="row">
+    <div class="pull-right" style="margin-top: 30px; margin-right: 20px;"><img src="{% block name %}{% endblock %}" alt="{{ kapitel.titel }}" title="{{ kapitel.titel }}" /></div>
+</div>
+</div>
+<div class="container" style="position: relative; top: -420px; z-index: -1;">
+<div class="docco">
+    {% block text %}{% endblock %}
+</div>
+</div>
+{% endblock %}

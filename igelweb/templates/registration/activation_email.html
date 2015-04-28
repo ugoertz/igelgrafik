@@ -1,0 +1,28 @@
+{% load i18n %}
+{% comment %}
+This template is used for the html alternative of the activation email
+if you use a django-registration backend that looks for it. e.g.
+https://github.com/huseyinyilmaz/django-registration-extended-backend
+{% endcomment %}
+{% url 'registration_activate' activation_key as activation_key_url %}
+{% blocktrans with sitename=site.name sitedomain=site.domain%}<body>
+<h3>Account registration for {{ sitename }}</h3>
+<p>
+Dies ist die Email, mit der Du Deinen Account bei <b>{{ sitename }}</b> aktivieren
+kannst. (Wenn Du keinen Account bei <b>{{ sitename }}</b> angefordert hast oder
+anlegen möchtest, dann ignoriere diese Email einfach; Deine Email-Adresse
+wird dann in Kürze aus unserer Datenbank gelöscht.)
+</p>
+<p>
+Um den Zugang zu aktivieren klicke innerhalb der nächsten {{ expiration_days }} Tage
+auf den folgenden Link:</br>
+
+<a href="http://{{ sitedomain }}{{ activation_key_url }}">http://{{ sitedomain }}{{  activation_key_url }}</a>
+</p>
+
+Viele Grüße
+
+{{ sitename }}
+</p>
+</body>
+{% endblocktrans %}

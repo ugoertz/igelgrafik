@@ -1,0 +1,58 @@
+{% extends "registration/registration_base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Aktivierung vollständig" %}{% endblock %}
+
+{% block head %}
+<script type="text/javascript" src="{{ STATIC_URL }}js/coffee-script.js"></script>
+<script type="text/javascript">
+function csrfSafeMethod(method) {
+    // these HTTP methods do not require CSRF protection
+    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+}
+$.ajaxSetup({
+beforeSend: function(xhr, settings) {
+if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
+}
+}
+});
+</script>
+
+<script type="text/coffeescript">
+$(document).ready =>
+  $('#savescripts').click ->
+    liste = localStorage.getItem('igelskripte')
+    if liste is null
+      new PNotify { title: 'Keine Skripte gefunden.', styling: 'bootstrap3' }
+      return
+    skripte = JSON.parse(liste)
+    skripte.sort()
+
+    error = true
+    callback = (data) ->
+      if data == 'Abgespeichert'
+        new PNotify { title: 'Skripte abgespeichert.', styling: 'bootstrap3' }
+      else
+        new PNotify { title: 'Beim Abspeichern ist ein Fehler aufgetreten.', styling: 'bootstrap3' }
+
+    skriptliste = ([ key, localStorage.getItem 'igel'+key ]  for key in skripte)
+    d = { "skriptliste": JSON.stringify(skriptliste) }
+    $.post('/skripte/speichern/', d, callback, 'json')
+
+</script>
+{% endblock %}
+
+
+{% block content %}
+{% url 'auth_login' as auth_login_url %}
+{% blocktrans %}
+<p>Danke, die Aktivierung des Benutzerzugangs ist nun erfolgt! Du bist nun eingeloggt.</p>
+
+<p>Wenn Du eingeloggt bist, werden Deine Skripte auf dem igelgrafik-Server abgespeichert und gehen auch dann nicht verloren, wenn der "localStorage" Deines Browsers gelöscht wird. Die Skripte, die Du schon früher gespeichert hast, sind allerdings nicht mehr sichtbar, wenn Du eingeloggt bist. Klicke auf den Button, um diese Skripte auf den Server zu kopieren, damit Du weiterhin darauf zugreifen kannst. (Die Skripte werden zusätzlich im localStorage belassen.)</p>
+
+<p><button type="button" id="savescripts" class="btn btn-default">Skripte auf den Server kopieren.</button></p>
+
+{% endblocktrans %}
+{% endblock %}
+
+

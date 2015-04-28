@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block head %}
+<script type="text/javascript">
+function csrfSafeMethod(method) {
+    // these HTTP methods do not require CSRF protection
+    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+}
+$.ajaxSetup({
+beforeSend: function(xhr, settings) {
+if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
+}
+}
+});
+</script>
+
+<script type="text/javascript" src="{{ STATIC_URL }}js/coffee-script.js"></script>
+<script type="text/coffeescript">
+{% if not user.is_authenticated %}
+  $(document).ready =>
+    liste = localStorage.getItem('igelskripte')
+    if liste is null
+      $("h2").after '<div class="row"><div class="col-md-5">{% trans "Du hast noch keine Skripte abgespeichert." %}</div></div>'
+    else
+      skripte = JSON.parse(liste)
+      skripte.sort()
+      $("h2").after '<div class="row"></div>'
+      for k in skripte
+        s = localStorage.getItem 'igel'+k
+        $("h2").nextAll(".row").last().after('<div style="border-bottom: 1px dashed gray; padding-bottom: 10px; padding-top: 10px;" class="row"><div class="col-md-2">' + k + '<div style="padding: 5px;"><button class="btn btn-default" id="run' + k + '">Laden</button> <button class="btn btn-danger" id="del' + k + '">Löschen</button></div></div><div class="col-md-9"><pre>' + s + '</pre></div></div>')
+      $('#del' + k).click ->
+        $('#delconfirm').off('click').click ->
+          localStorage.removeItem 'igel'+k
+          l = JSON.parse localStorage.getItem 'igelskripte'
+          l.pop k
+          localStorage.setItem 'igelskripte', JSON.stringify l
+          location.reload()
+          $('#confirmDelete').modal('hide')
+
+        $('#confirmDelete').modal()
+
+      $('#run' + k).click ->
+        window.location.href = '/skripte/lokal/' + k
+
+{% endif %}
+  $(document).ready =>
+{% for s in skripte %}
+    $('#del{{ s.id }}').click ->
+      $('#delconfirm').off('click').click ->
+        $.post('/skripte/loeschen/{{ s.id }}/', (data) ->
+          new PNotify { title: $.parseJSON(data), styling: "bootstrap3" }
+          location.reload(true)
+        )
+        $('#confirmDelete').modal('hide')
+
+      $('#confirmDelete').modal()
+
+    $('#run{{ s.id }}').click ->
+      window.location.href = '/skripte/laden/{{ s.id }}/'
+{% endfor %}
+</script>
+{% endblock %}
+
+{% block content %}
+<h2>Meine Skripte</h2>
+
+{% for s in skripte %}
+<div style="border-bottom: 1px dashed gray; padding-bottom: 10px; padding-top: 10px;" class="row">
+    <div class="col-md-2">{{ s.key }}
+        {% if s.bild %}<img style="border: 1px solid black;" src="{{ s.thumbnail.url }}">{% endif %}
+        <div style="padding: 5px;">
+            <button class="btn btn-default" id="run{{ s.id }}">Laden</button>
+            <button class="btn btn-danger" id="del{{ s.id }}">Löschen</button>
+        </div>
+    </div>
+    <div class="col-md-9"><pre>{{ s.skript }}</pre>
+    </div>
+</div>
+{% endfor %}
+<div class="modal fade" id="confirmDelete" tabindex="-1" role="dialog" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="confirmDeleteModalLabel">Löschen?</h4>
+            </div>
+            <div class="modal-body">
+                Soll dieses Skript gelöscht werden?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal" id="delcancel">Nicht löschen</button>
+                <button type="button" class="btn btn-primary" id="delconfirm">Löschen</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block content %}
+<div class="jumbotron">
+    <img src="{% static "img/igel.png" %}" class="pull-right" style="border:1px solid gray;">
+<h1 style="margin-bottom:50px;">igelgrafik.de</h1>
+<p>Programmieren lernen mit "Igelgrafik" und CoffeeScript.</p>
+<p>Schaue Dir die Beispiele im <a href="/tutorial/">Tutorial</a> und in der <a href="Gallerie">Gallerie</a> an. Auf der <a href"/igel">Igel-Seite</a> kannst Du dann eigene Igel-Programme schreiben und direkt ausprobieren.</p>
+</div>
+
+<div class="row">
+    <div class="col-md-5" style="border: 1px solid lightblue;">
+        <h2>Igel-Grafik</h2>
+
+        <p>Die Idee der Igel-Grafik (englisch <i>turtle graphics</i>) kam in den sechziger Jahren auf. Sie wurde von S. Papert als Teil der Programmiersprache Logo implementiert. Die ersten "Igel" lebten noch nicht auf einem Computer-Bildschirm, sondern waren <a href="http://museum.mit.edu/nom150/entries/1158">kleine Roboter</a>. <a href="http://el.media.mit.edu/logo-foundation/logo/turtle.html">Mehr Informationen</a>.</p>
+        <p>Mit wenigen Befehlen lassen sich erstaunlich komplexe Bilder produzieren. Weil man das Ergebnis direkt sieht, eignet sich die Igelgrafik gut, um programmieren zu lernen.</p>
+    </div>
+    <div class="col-md-7">
+        <div style="margin-left:10px; padding-left: 10px; padding-right: 20px;  border: 1px solid lightblue;">
+        <h2>L-Systeme</h2>
+
+        <p>L-Systeme sind eine Möglichkeit, sehr konzise Beschreibungen für gewisse selbstähnliche geometrische Figuren anzugeben, die dann mit Igelgrafik gezeichnet werden können. Neben abstrakten Formen lassen sich so auch Bäume und andere "biologische" Gebilde zeichnen. In der <a href="/gallerie/#lsystem">Gallerie</a> findet Du Beispiele.</p> 
+    </div>
+</div>
+</div>
+
+{% endblock %}

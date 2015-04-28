@@ -1,0 +1,15 @@
+{% extends "registration/registration_base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Account anlegen" %}{% endblock %}
+{% block content %}
+<p>Wenn Du Deine Igel-Skripte auf dem Igelgrafik-Server speichern möchtest, kannst Du hier einen Account anlegen. Du bekommst dann eine Email von uns mit einem Link, mit dem Du Deine Anmeldung an dieser Seite bestätigen musst.</p>
+
+<p>Deine Email-Adresse wird auf dem Igelgrafik-Server gespeichert. Sie wird nicht an andere weitergegeben. Als Skripte dürfen nur Igelgrafik-Programme abgespeichert werden. Es wird keine Gewährleistung/Haftung für die Funktionalität der Seite übernommen.</p>
+
+<table class="table">
+    <form method='post' action=''>{% csrf_token %}
+        {{ form }}
+        <tr><td></td><td><input type="submit" value="{% trans "Account anlegen" %}" /></td>
+    </form>
+</table>
+{% endblock %}

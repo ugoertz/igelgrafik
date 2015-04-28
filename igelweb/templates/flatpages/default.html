@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load markup_tags %}
+
+{% block title %}{{ flatpage.title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="span1"></div>
+    <div class="span8">
+        {{ flatpage.content|apply_markup:"textile" }}
+    </div>
+</div>
+{% endblock %}

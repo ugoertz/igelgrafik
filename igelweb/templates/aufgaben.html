@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load markup %}
+
+{% block titel %}{% trans "Aufgaben - Übersicht" %}{% endblock %}
+
+
+{% block content %}
+{% for aufgabe in aufgabenliste %}
+{% ifchanged %}
+<div class="row">
+    <div class="span12">
+        <h2>{{ aufgabe.get_kategorie_display }}</h2>
+    </div>
+</div>
+{% endifchanged %}
+<div class="row">
+    <div class="span2">
+        <a href="/aufgabe/{{ kapitel.id }}/">
+            <img style="border:1px solid gray;" src="{{ aufgabe.thumbnail.url }}">
+        </a>
+    </div>
+    <div class="span10">
+        <h4><a href="/tutorial/{{ aufgabe.id }}/">
+                {{ aufgabe.titel}}
+        </a></h4>
+        <p>{{ aufgabe.zusammenfassung|textile }}</p>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}
+

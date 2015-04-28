@@ -1,0 +1,693 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load staticfiles %}
+
+{% block head %}
+<style type="text/css">
+    textarea {
+        font-family:courier;
+        font-size:10pt;
+        border: 2px solid gray;
+        border-radius: 5px;
+        padding: 5px;
+    }
+
+</style>
+<script type="text/javascript" src="{% static "js/jquery.hotkeys.js" %}"></script>
+<script type="text/javascript" src="{% static "js/jquery.autosize.min.js" %}"></script>
+<script type="text/javascript" src="{% static "js/easeljs.js" %}"></script>
+<script type="text/javascript" src="{% static "js/coffee-script.js" %}"></script>
+{# <script type="text/javascript" src="{% static "coffee/igel.js" %}"></script> #}
+
+
+<script type="text/javascript">
+function csrfSafeMethod(method) {
+    // these HTTP methods do not require CSRF protection
+    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+}
+$.ajaxSetup({
+    beforeSend: function(xhr, settings) {
+        if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+            xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
+        }
+    }
+});
+</script>
+
+
+<script type="text/coffeescript">
+
+class Turtle
+  constructor: (w, h, @canvas) ->
+    @plotcounter = 0
+    @canvas.width = w
+    @canvas.height = h
+    @stage = new createjs.Stage($("#canvas")[0])
+    @homepos =
+      x: w/2
+      y: h/2
+      angle: 0
+    @queue = $({})
+    @path_counter = 0
+    @clear()
+    @ticker = createjs.Ticker.on("tick", this.tick, this)
+    @allow_caching = true
+
+  update: ->
+    @turtle.x = @x
+    @turtle.y = @y
+    @turtle.rotation = @angle
+
+  forwardPos: (distance) ->
+    x = (Math.sin(@angle / 180 * Math.PI) * distance) + @x
+    y = (Math.cos(@angle / 180 * Math.PI) * (-distance)) + @y
+    return {x: x, y: y }
+
+  forward: (distance) =>
+    @queue.queue 'move', (next) =>
+      toPos = @forwardPos distance
+      if @isPendown
+        @g.lineTo(toPos.x, toPos.y)
+        # console.log 'fw', toPos.x, toPos.y
+      else
+        @g.moveTo(toPos.x, toPos.y)
+      @x = toPos.x
+      @y = toPos.y
+      @update()
+
+  backward: (distance) =>
+    @forward(-distance)
+
+  left: (angle) =>
+    @queue.queue 'move', (next) =>
+      @angle -= angle
+      @update()
+
+  right: (angle) =>
+    @left -angle
+
+  setAngle: (angle) =>
+    @queue.queue 'move', (next) =>
+      @angle = angle
+      @update()
+
+
+  pendown: =>
+    @queue.queue 'move', (next) =>
+      @isPendown = true
+      next()
+
+  penup: =>
+    @queue.queue 'move', (next) =>
+      @isPendown = false
+      next()
+
+
+  pencolor: (color) =>
+    @queue.queue 'move', (next) =>
+      @g.beginStroke(@penColor = color)
+      @g.moveTo @x, @y
+      next()
+
+  pensize: (x) =>
+    @queue.queue 'move', (next) =>
+      @strokeStyle = x
+      @g.setStrokeStyle x
+      @g.moveTo @x, @y
+      next()
+
+  hideturtle: =>
+    @queue.queue 'move', (next) =>
+      @turtle.visible = false
+      @update()
+
+  showturtle: =>
+    @queue.queue 'move', (next) =>
+      @turtle.visible = true
+      @update()
+
+  fill: (color=null) =>
+    @allow_caching = false # our naive way of "cutting" paths does not work with fill
+    @queue.queue 'move', (next) =>
+      @g.beginFill(color)
+      @g.moveTo @x, @y
+      next()
+
+  plot: (x,y) =>
+    [ xx, yy ] = [ Math.round(x) + 300, 300 - Math.round(y) ]
+    @g1.beginStroke(@plotColor)
+    @g1.moveTo xx, yy
+    @g1.lineTo xx, yy+1
+    @plotcounter += 1
+    if @plotcounter > 5000
+      @stage.getChildAt(0).cache(0,0,600,600)
+      @g1 = new createjs.Graphics()
+      @g1.setStrokeStyle(1)
+      @stage.addChildAt new createjs.Shape(@g1), 0
+      @stage.update()
+      @plotcounter = 0
+
+
+
+  clear: =>
+    # @queue.queue 'move', (next) =>
+      # console.log 'clear'
+      @queue.clearQueue('move')
+      @x = @homepos.x
+      @y = @homepos.y
+      @angle = @homepos.angle
+      @isPendown = true
+      @penColor = 'black'
+      @strokeStyle = 2
+      @stage.clear()
+      @stage.removeAllChildren()
+      @g1 = new createjs.Graphics()
+      @g1.setStrokeStyle(1)
+      @plotColor = 'black'
+      @stage.addChild new createjs.Shape(@g1)
+      g = new createjs.Graphics() # turtle
+      g.setStrokeStyle(2)
+      g.beginStroke('black')
+      g.beginFill('gray')
+      g.moveTo(-8, 7)
+      g.lineTo(0, -15)
+      g.lineTo(8, 7)
+      g.lineTo(-8, 7)
+      @turtle = new createjs.Shape(g)
+      @stage.addChild @turtle
+      @newpath()
+
+  newpath: =>
+    # if @stage.getNumChildren()>1
+    #   @stage.getChildAt(@stage.getNumChildren()-2).endStroke()
+    @g = new createjs.Graphics()
+    @g.beginStroke(@penColor)
+    @g.moveTo @x, @y
+    @g.setStrokeStyle(@strokeStyle)
+    @stage.addChildAt new createjs.Shape(@g), @stage.getNumChildren()-1 # add new path right below turtle
+    @g.lineTo @x, @y # forward 0 # strangely, this seems to be needed with current EaselJS version to "activate" g?!
+    @update()
+    @stage.update()
+
+  home: =>
+    @queue.queue 'move', (next) =>
+      @x = @homepos.x
+      @y = @homepos.y
+      @angle = @homepos.angle
+      if @isPendown
+        @g.lineTo @x, @y
+      else
+        @g.moveTo @x, @y
+      @update()
+
+  tick: (event) =>
+    # console.log "tick"
+    if @queue.queue('move').length
+      @queue.dequeue('move')
+      # console.log "deq", @queue.queue("move").length
+      @path_counter += 1
+      if @allow_caching and @path_counter > 500
+        # Start a new path every 100 steps so that we can use caching.
+        @path_counter = 0
+        @stage.getChildAt(@stage.getNumChildren()-2).cache(0,0,600,600)
+        @newpath()
+    @stage.update(event)
+
+  speed: (speed) =>
+    @queue.queue 'move', (next) =>
+      createjs.Ticker.setFPS(speed)
+      next()
+
+window.Turtle = Turtle
+
+
+class _Lsystem
+  constructor: (turtle) ->
+    @turtle = turtle
+    @stack = [ [ ] ]
+    # default rules define a kind of tree
+    @axiom = 'F'.split()
+    @regeln =
+      'F': 'F[+F]FF[-F][-F[+F]][F]'.split('')
+    @distanz = 5
+    @winkel = 20
+    @farbe1 = 'red'
+    @farbe2 = 'blue'
+    @farbe3 = 'yellow'
+    @funktionen =
+      'A': @vor
+      'B': @vor
+      'F': @vor
+      'G': @vor
+      'H': @vor
+      'f': @jump
+      'g': @jump
+      'h': @jump
+      '[': @push
+      ']': @pop
+      '+': @left
+      '-': @right
+      '|': @turn
+      'a': @colora
+      'b': @colorb
+      'c': @colorc
+
+  colora: =>
+      @turtle.pencolor @farbe1
+
+  colorb: =>
+      @turtle.pencolor @farbe2
+
+  colorc: =>
+      @turtle.pencolor @farbe3
+
+  vor: =>
+      @turtle.forward @distanz
+      @speichern =>
+        @turtle.penup()
+        @turtle.backward @distanz
+        @turtle.pendown()
+  jump: =>
+      @turtle.penup()
+      @turtle.forward @distanz
+      @turtle.pendown()
+      @speichern =>
+        @turtle.penup()
+        @turtle.backward @distanz
+        @turtle.pendown()
+  push: =>
+      @stack.push []
+  pop: =>
+      rckweg = @stack.pop()
+      for b in rckweg
+        b()
+  left: =>
+      @turtle.left @winkel
+      @speichern => @turtle.right @winkel
+  right: =>
+      @turtle.right @winkel
+      @speichern => @turtle.left @winkel
+  turn: =>
+      @turtle.right 180
+      @speichern => @turtle.left 180
+
+  setzeaxiom: (a) =>
+    @axiom = a.split('')
+
+  setzeregeln: (r) =>
+    to_hash = (pairs) ->
+      hash = {}
+      hash[key] = value for [key, value] in pairs
+      hash
+    @regeln = to_hash([k, v.split('')] for k, v of r)
+
+  berechnen: (l) =>
+    l_neu = []
+    for x in l
+      l_neu = l_neu.concat(if @regeln[x]? then @regeln[x] else x)
+    return l_neu
+
+  speichern: (f) =>
+    @stack[@stack.length-1] = [ f ].concat @stack[@stack.length-1]
+
+  zeichnen: (n) =>
+    l = @axiom
+    for i in [0...n]
+      l = @berechnen l
+    for x in l
+      # console.log x
+      if @funktionen[x]? then @funktionen[x]()
+    return true
+
+window._Lsystem = _Lsystem
+
+
+class _IFS
+  constructor: (canvas) ->
+    @canvas = canvas
+    @funktionen = [ ((x,y) -> [0.27 * x, 0.25 * y + 0.5 + 0.15 * Math.sin(x+y)]),
+                    ((x,y) -> [0.82 * x + 0.474 * y + 0.3 - 0.01 * Math.cos(x-y), -0.4 * x + 0.8 * y - 0.1]) ]
+    @gewichtung = []
+    @farben = [ 'red', 'blue', 'yellow', 'lightgreen', 'brown', 'black', 'orange', 'violet', 'lightblue', 'gray' ]
+
+  affin: (l) =>
+    [ a11, a12, a21, a22, b1, b2 ] = l
+    return (x,y) -> [ a11 * x + a12 * y + b1, a21 * x + a22 * y + b2 ]
+
+  nextf: (x,y,addr=[]) =>
+    r = Math.random()
+    sum_p = 0
+    for p, i in @gewichtung
+       sum_p += p
+       if r < sum_p
+         [ xx, yy ] = @funktionen[i](x, y)
+         return [ xx, yy, [i].concat addr[0..3]]
+
+  farbe: (addr) =>
+    @farben[addr[0] % @farben.length]
+
+  transformiere: (x, y) =>
+    [200 * x, 200 * y]
+
+  zeichnen: (n, m=20) =>
+    [x, y] = [0, 0]
+    addr = []
+
+    if not @gewichtung.length
+      @gewichtung = (1/@funktionen.length for f in @funktionen)
+    for i in [1..m]
+      [x, y, addr] = @nextf(x,y, addr)
+
+    for i in [1..n]
+      [x, y, addr] = @nextf(x,y, addr)
+      @canvas.fillStyle = @farbe addr
+      [ xx, yy ] = @transformiere x, y
+      @canvas.fillRect  300+Math.round(xx), 300-Math.round(yy), 1, 1
+
+window._IFS = _IFS
+
+
+
+
+</script>
+
+<script type="text/coffeescript">
+  $(document).ready =>
+
+    $('[data-toggle="tooltip"]').tooltip()
+
+    rot = 'red'
+    orange = 'orange'
+    blau = 'blue'
+    hellblau = 'lightblue'
+    grün = 'green'
+    hellgrün = 'lightgreen'
+    schwarz = 'black'
+    weiß = 'white'
+    gelb = 'yellow'
+    lila = 'violet'
+    grau = 'gray'
+    braun = 'brown'
+
+    wiederhole = (n, f) -> f() für i in [1..n]
+    würfel = (l) -> l[Math.floor(Math.random() * l.length)]
+
+    turtle = new Turtle 600, 600, $('#canvas')[0]
+    vor = turtle.forward
+    zurück = turtle.backward
+    rechts = turtle.right
+    dreherechts = -> rechts 90
+    links = turtle.left
+    drehelinks = -> links 90
+    gerade = -> turtle.setAngle(0)
+    fülle = turtle.fill
+    stiftrunter = turtle.pendown
+    stifthoch = turtle.penup
+    stiftfarbe = turtle.pencolor
+    stiftbreite = turtle.pensize
+    bildschirmleer = turtle.clear
+    nachhause = turtle.home
+    versteckeigel = turtle.hideturtle
+    zeigeigel = turtle.showturtle
+    geschwindigkeit = turtle.speed
+    plot = turtle.plot
+    plotfarbe = (farbe) ->
+      turtle.plotColor = farbe
+    LSystem = new _Lsystem turtle
+    canvas = $('#canvas')[0].getContext('2d')
+    canvas.translate 0.5, 0.5
+    IFS = new _IFS canvas
+
+    canvasmode = false
+    canvasmodus = ->
+      if canvasmode then return
+      canvasmode = true
+      # turtle.clear()
+      turtle.stage.removeAllChildren()
+      turtle.stage.update()
+      canvas.fillStyle = 'black'
+      createjs.Ticker.off("tick", turtle.ticker)
+      plotfarbe = (farbe) ->
+        canvas.fillStyle = farbe
+
+      plot = (x,y) ->
+        [ xx, yy ] = [ Math.round(x) + 300, 300 - Math.round(y) ]
+        canvas.fillRect(xx, yy, 1, 1)
+
+    geschwindigkeit 20
+
+
+{% if user.is_authenticated %}
+
+    $('#submitbutton').click ->
+      skript = $('#save1ta').val()
+      if skript.length < 10000
+        $('#sbmtconfirm').off('click').click ->
+          $.post('/skripte/einreichen/', { skript: skript }, (data) ->
+              new PNotify { title: $.parseJSON(data), styling: 'bootstrap3' }, 'json')
+          $('#confirmSubmit').modal('hide')
+
+        $('#confirmSubmit').modal()
+
+    # load/save via ajax
+    savetext = ->
+      idstring = $(this).attr('id')
+      key = $('#'+idstring+'input').val()
+      if key is ''
+        new PNotify { title: 'Fehler', text: 'Kein Name angegeben.', type: 'error', styling: 'bootstrap3' }
+      else
+        save = (idstring) ->
+          skript = $('#'+idstring+'ta').val()
+          d = { key: key, skript: skript }
+          if $('#saveimg').prop('checked')
+            d.img = $('#canvas')[0].toDataURL()
+          $.post('/skripte/speichern/', d, (data) ->
+              new PNotify { title: data, styling: 'bootstrap3' },
+              'json')
+        $.get('/skripte/ajaxladen/', { 'key': key }, (data) ->
+          skr = $.parseJSON(data)["skript"]
+          if skr == ''
+            save idstring
+          else
+            $('#csconfirm').off('click').click ->
+              save idstring
+              $('#confirmSave').modal('hide')
+
+            $('#confirmSave').modal()
+        )
+
+
+    loadtext = ->
+      idstring = $(this).attr('id').replace /load/, "save"
+      key = $('#'+idstring+'input').val()
+      if key is ''
+        new PNotify { title: 'Fehler', text: 'Kein Name angegeben.', type: 'error', styling: 'bootstrap3' }
+      else
+        $.get('/skripte/ajaxladen/', { 'key': key }, (data) ->
+          skript = $.parseJSON(data)["skript"]
+          if skript == ''
+            new PNotify { title: 'Fehler', text: 'Skript nicht gefunden.', type: 'error', styling: 'bootstrap3' }
+          else
+            $('#'+idstring+'ta').val(skript)
+        )
+
+    append_load_save = (ctr) ->
+      $("#igelbutton#{ctr}").after '<button id="loadID" class="btn btn-default pull-right">{% trans "Laden" %}</button><button class="btn btn-default pull-right" id="saveID" style="margin-left:10px; margin-right:10px;">{% trans "Speichern" %}</button><input type="text" class="pull-right" style="width:100px;" id="saveIDinput" >'.replace /ID/g, "#{ctr}"
+      $("#save#{ctr}").click savetext
+      $("#load#{ctr}").click loadtext
+
+{% else %}
+    # speichere den aktuellen text im localStorage, unter dem Namen in dem input-Element neben dem "Speichern"-Knopf
+    savetext = ->
+      idstring = $(this).attr('id')
+      key = $('#'+idstring+'input').val()
+
+      if key is ''
+        new PNotify { title: 'Fehler', text: 'Kein Name angegeben.', type: 'error', styling: 'bootstrap3' }
+      else
+        value = $('#'+$(this).attr('id')+'ta').val()
+        localStorage.setItem 'igel'+key, value
+
+        # nun noch den namen des skripts in der liste aller skripte abspeichern:
+        if not (localStorage.getItem 'igelskripte')?
+          localStorage.setItem 'igelskripte', '[]'
+        liste = JSON.parse localStorage.getItem 'igelskripte'
+        if not (key in liste)
+          liste.push key
+        localStorage.setItem 'igelskripte', JSON.stringify liste
+        new PNotify { title: 'Abgespeichert', text: "unter #{key}.", type: 'success' }
+
+    loadtext = ->
+      idstring = $(this).attr('id').replace /load/, "save"
+      key = 'igel' + $('#'+idstring+'input').val()
+      skript = localStorage.getItem key
+      if not skript
+        new PNotify { title: 'Fehler', text: 'Skript nicht gefunden.', type: 'error' }
+      else
+        $('#'+idstring+'ta').val(skript)
+
+    append_load_save = (ctr) ->
+      if Modernizr.localstorage
+        $("#igelbutton#{ctr}").after '<button id="loadID" class="btn btn-default pull-right">{% trans "Laden" %}</button><button class="btn btn-default pull-right" id="saveID" style="margin-left:10px; margin-right:10px;">{% trans "Speichern" %}</button><input type="text" class="pull-right" style="width:100px;" id="saveIDinput" >'.replace /ID/g, "#{ctr}"
+        $("#save#{ctr}").click savetext
+        $("#load#{ctr}").click loadtext
+{% endif %}
+
+    # führe den code in der entsprechenden textarea aus
+    run_textarea = (ta) =>
+      # console.log 'run'
+      try
+        window.compiledJS = CoffeeScript.compile ta.val(), bare: on
+      catch error
+        # console.log 'compile error'
+        new PNotify { title: 'Fehler', text: 'Beim Kompilieren ist ein Fehler aufgetreten\n\n' + error, type: 'error' }
+        # console.log error
+        return
+      try
+        eval window.compiledJS
+        if canvasmode
+          new PNotify { title: 'Fertig', type: 'success', animate_speed: 'fast', styling: 'bootstrap3' }
+        else
+          turtle.queue.queue 'move', ->
+            new PNotify { title: 'Fertig', type: 'success', animate_speed: 'fast', styling: 'bootstrap3' }
+      catch error
+        new PNotify { title: 'Fehler', text: 'Beim Ausführen ist ein Fehler aufgetreten\n\n' + error, type: 'error' }
+        # console.log 'runtime error', error
+
+    # füge die aktuelle textarea mit der darüberliegenden textarea zusammen
+    combine_ta = ->
+      previous = $(this).parent().prev().children('textarea')
+      previous.val(previous.val() + '\n' + $(this).val()) # .trigger('autosize')
+      previous.focus()
+      $(this).parent().remove()
+      return false
+
+    # hänge eine neue textarea an die aktuelle an
+    ta_function = (ta) ->
+      counter += 1
+      taid = "save#{counter}ta"
+      ta.parent().after '<div class="runigel"><textarea id="ID" cols="70" rows="5" style="margin-top:20px; width:450px;"></textarea></div>'.replace /ID/, taid
+      $('#'+taid).autosize()
+      $('#'+taid).bind 'keyup', 'ctrl+return', ->
+        run_textarea $(this)
+        if not $(this).parent().nextAll('.runigel').length
+          ta_function($(this))
+      $('#'+taid).bind 'keyup', 'shift+pagedown', ->
+        ta_function($(this))
+      $('#'+taid).bind 'keyup', 'shift+pageup', combine_ta
+      $('#'+taid).after '<button id="igelbuttonID" class="btn btn-success">{% trans "Ausführen" %}</button>'.replace /ID/, "#{counter}"
+      $("#igelbutton#{counter}").click ->
+        run_textarea $(this).prev('textarea')
+      append_load_save counter
+      $('#'+taid).focus()
+
+    $('#save1ta').autosize()
+    $('#save1ta').bind 'keyup', 'ctrl+return', ->
+      run_textarea $(this)
+      if not $(this).parent().nextAll('.runigel').length
+        ta_function($(this))
+    $('#save1ta').bind 'keyup', 'shift+pagedown', ->
+      ta_function($(this))
+    $('#igelbutton1').click ->
+      run_textarea $(this).prev('textarea')
+    counter = 1
+    append_load_save counter
+
+    $('#stopbutton').click ->
+      geschwindigkeit 20
+      turtle.queue.clearQueue 'move'
+      new PNotify { title: 'Stop', text: 'Skript angehalten.', type: 'warning' }
+    $('#clearbutton').click ->
+      if canvasmode
+        turtle.ticker = createjs.Ticker.on("tick", turtle.tick, turtle)
+        plot = turtle.plot
+        plotfarbe = (farbe) ->
+          turtle.plotColor = farbe
+        canvasmode = false
+      bildschirmleer()
+      geschwindigkeit 20
+
+{% if key %}
+  {% if user.is_authenticated %}
+    $('#save1input').val '{{ key }}'
+  {% else %}
+    if Modernizr.localstorage
+      skript = localStorage.getItem 'igel{{ key }}'
+      if not skript
+        new PNotify { title: 'Fehler', text: 'Skript {{ key }} nicht gefunden.', type: 'error' }
+      else
+        $('#save1ta').val skript
+        $('#save1input').val '{{ key }}'
+  {% endif %}
+{% endif %}
+
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-7">
+        <canvas id='canvas' style="border:1px solid gray; width:600px; height:600px; background-color:white; position:fixed;"></canvas>
+        <div style="margin-top:300px; margin-bottom:200px;">.</div>
+    </div>
+    <div class="col-md-5">
+        {% if user.is_authenticated %}
+        <div class="row" style="margin-bottom: 10px;">
+            <div class="pull-right">
+                <button id="submitbutton" data-toggle="tooltip" data-placement="left" title="Das Skript im ersten Textfenster zur Veröffentlichung in der Gallerie einreichen." class="btn btn-info pull-right">Für Gallerie vorschlagen</button>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="row">
+            <div>
+                <button id="stopbutton" style="margin-left: 10px;" class="btn btn-danger pull-right">Stop</button>
+                <button id="clearbutton" style="margin-left: 10px;" class="btn btn-info pull-right" >Bildschirm löschen</button>
+            </div>
+            {% if user.is_authenticated %}<span style="width: 100px;" class="input-group-addon"><input id="saveimg" type="checkbox" aria-label="Mit Bild speichern" checked><span style="padding-left: 10px;">Mit Bild abspeichern</span></span>{% endif %}
+        </div>
+        <div class="row">
+            <div class="runigel">
+                <textarea id="save1ta" cols="70" rows="8" style="margin-top:20px; margin-bottom: 10px; width:450px;">{{ skript|safe }}</textarea>
+                <button id="igelbutton1" class="btn btn-success">{% trans "Ausführen" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="confirmSubmit" tabindex="-1" role="dialog" aria-labelledby="confirmSubmitModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="confirmSubmitModalLabel">Einreichen?</h4>
+            </div>
+            <div class="modal-body">
+                Soll dieses Skript zur Veröffentlichung in der Gallerie eingereicht werden?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal" id="sbmtcancel">Nicht einreichen</button>
+                <button type="button" class="btn btn-primary" id="sbmtconfirm">Einreichen</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="confirmSave" tabindex="-1" role="dialog" aria-labelledby="confirmSaveModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="confirmSaveModalLabel">Überschreiben?</h4>
+      </div>
+      <div class="modal-body">
+          Es gibt schon ein Skript mit diesem Namen. Soll es überschrieben werden?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal" id="cscancel">Nicht speichern</button>
+        <button type="button" class="btn btn-primary" id="csconfirm">Überschreiben</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

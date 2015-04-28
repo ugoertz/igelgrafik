@@ -1,0 +1,14 @@
+{% extends "registration/registration_base.html" %}
+{% load i18n %}
+{% block title %}{% if account %}{% trans "Account aktiviert" %}{% else %}{% trans "Problem bei der Aktivierung des Accounts" %}{% endif %}{% endblock %}
+{% block content %}
+{% url 'auth_login' as auth_login_url %}
+{% if account %}
+{% blocktrans %}
+Danke {{ account }}, Dein Benutzerzugang ist nun aktiviert!
+Du kannst Dich nun <a href='{{ auth_login_url }}'>einloggen</a> mit dem Benutzernamen und Passwort, das Du ausgewählt hast.
+{% endblocktrans %}
+{% else %}
+{% blocktrans %}Oops &ndash; dieser Aktivierungscode ist ungültig. Vielleicht ein Tippfehler in der URL?{% endblocktrans %}
+{% endif %}
+{% endblock %}

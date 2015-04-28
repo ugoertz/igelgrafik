@@ -1,0 +1,11 @@
+{% extends "tutorial-base.html" %}
+{% load i18n %}
+
+{% block titel %}{{ kapitel.titel }}{% endblock %}
+
+{% block name %}{{ kapitel.docbild.url }}{% endblock %}
+
+{% block text %}
+{{ kapitel.doccoHTML|safe }}
+{% endblock %}
+

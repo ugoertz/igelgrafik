@@ -1,0 +1,46 @@
+body {
+    padding-top: 60px;
+    padding-bottom: 40px;
+    font-size: 16px;
+}
+
+.docco {
+    font-family: 'Cabin', sans-serif;
+}
+
+.content {
+    font-family: 'Cabin', sans-serif;
+}
+
+.helptext {
+    font-size:80%;
+}
+
+h2 {
+    margin-top: 30px;
+}
+
+
+
+@media (max-width: 767px) {
+    .navbar-fixed-top {
+        position: relative;
+        top: auto;
+    }
+    .navbar-collapse {
+        max-height: none;
+    }
+    body {
+        margin: 0;
+    }
+}
+
+
+
+
+
+
+
+
+
+
