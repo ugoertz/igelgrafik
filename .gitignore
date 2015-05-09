@@ -8,6 +8,7 @@ backup-db
 resources
 !resources/pygments-patch
 
+igeldb
 data
 staticroot
 tmp
