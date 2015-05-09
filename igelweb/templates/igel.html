@@ -47,11 +47,43 @@ class Turtle
       x: w/2
       y: h/2
       angle: 0
+
+    # set up a queue to store the turtle moves
+    # regular moves are queued to the 'move' queue
+    # moves in the 'prio' queue bypass the move queue and are executed with
+    # higher priority
     @queue = $({})
+    @currentQueue = 'move'
+
     @path_counter = 0
     @clear()
     @ticker = createjs.Ticker.on("tick", this.tick, this)
     @allow_caching = true
+
+    # @turtleupdates contains two lists of functions. The functions in the
+    # always list are executed as part of every tick (after popping the top
+    # element of the queue and handling it). The functions in the idle list are
+    # executed in the tick function when the queue is empty.
+    @turtleupdates = {'always': [], 'idle': []}
+    @g = null
+
+  pushToCurrentQueue: (f) ->
+    @queue.queue @currentQueue, f
+
+  hitTest: (name) ->
+    s = @stage.getChildByName(name)
+    if not s then return false
+
+    console.log "hittest", s.x, s.y
+    # test for hits of corner points and center of the turtle triangle
+    # and for some points along the central axes
+    pointlist = [[0,0], [-8,7], [8,7], [0,15], [0,7], [0,4], [0,1],
+                 [0,-2], [0,-5], [0,-8], [0,-11], [0,-14], [-5,0], [5,0]]
+
+    for p in pointlist
+      pt = @turtle.localToLocal(p[0], p[1], s)
+      if s.hitTest(pt.x, pt.y) then return true
+    false
 
   update: ->
     @turtle.x = @x
@@ -64,7 +96,7 @@ class Turtle
     return {x: x, y: y }
 
   forward: (distance) =>
-    @queue.queue 'move', (next) =>
+    @pushToCurrentQueue (next) =>
       toPos = @forwardPos distance
       if @isPendown
         @g.lineTo(toPos.x, toPos.y)
@@ -79,7 +111,7 @@ class Turtle
     @forward(-distance)
 
   left: (angle) =>
-    @queue.queue 'move', (next) =>
+    @pushToCurrentQueue (next) =>
       @angle -= angle
       @update()
 
@@ -87,48 +119,48 @@ class Turtle
     @left -angle
 
   setAngle: (angle) =>
-    @queue.queue 'move', (next) =>
+    @pushToCurrentQueue (next) =>
       @angle = angle
       @update()
 
 
   pendown: =>
-    @queue.queue 'move', (next) =>
+    @pushToCurrentQueue (next) =>
       @isPendown = true
       next()
 
   penup: =>
-    @queue.queue 'move', (next) =>
+    @pushToCurrentQueue (next) =>
       @isPendown = false
       next()
 
 
   pencolor: (color) =>
-    @queue.queue 'move', (next) =>
+    @pushToCurrentQueue (next) =>
       @g.beginStroke(@penColor = color)
       @g.moveTo @x, @y
       next()
 
   pensize: (x) =>
-    @queue.queue 'move', (next) =>
+    @pushToCurrentQueue (next) =>
       @strokeStyle = x
       @g.setStrokeStyle x
       @g.moveTo @x, @y
       next()
 
   hideturtle: =>
-    @queue.queue 'move', (next) =>
+    @pushToCurrentQueue (next) =>
       @turtle.visible = false
       @update()
 
   showturtle: =>
-    @queue.queue 'move', (next) =>
+    @pushToCurrentQueue (next) =>
       @turtle.visible = true
       @update()
 
   fill: (color=null) =>
     @allow_caching = false # our naive way of "cutting" paths does not work with fill
-    @queue.queue 'move', (next) =>
+    @pushToCurrentQueue (next) =>
       @g.beginFill(color)
       @g.moveTo @x, @y
       next()
@@ -175,22 +207,25 @@ class Turtle
       g.lineTo(-8, 7)
       @turtle = new createjs.Shape(g)
       @stage.addChild @turtle
+      @update()
       @newpath()
 
-  newpath: =>
-    # if @stage.getNumChildren()>1
-    #   @stage.getChildAt(@stage.getNumChildren()-2).endStroke()
-    @g = new createjs.Graphics()
-    @g.beginStroke(@penColor)
-    @g.moveTo @x, @y
-    @g.setStrokeStyle(@strokeStyle)
-    @stage.addChildAt new createjs.Shape(@g), @stage.getNumChildren()-1 # add new path right below turtle
-    @g.lineTo @x, @y # forward 0 # strangely, this seems to be needed with current EaselJS version to "activate" g?!
-    @update()
-    @stage.update()
+  newpath: (name = '') =>
+    @pushToCurrentQueue (next) =>
+      if @g then @g.endStroke()
+      @g = new createjs.Graphics()
+      @g.beginStroke(@penColor)
+      @g.moveTo @x, @y
+      @g.setStrokeStyle(@strokeStyle)
+      shp = new createjs.Shape(@g)
+      if name != ''
+        shp.name = name
+      @stage.addChildAt shp, @stage.getNumChildren()-1 # add new path right below turtle
+      @g.lineTo @x, @y # forward 0 # strangely, this seems to be needed with current EaselJS version to "activate" g?!
+      @stage.update()
 
   home: =>
-    @queue.queue 'move', (next) =>
+    @pushToCurrentQueue (next) =>
       @x = @homepos.x
       @y = @homepos.y
       @angle = @homepos.angle
@@ -201,7 +236,10 @@ class Turtle
       @update()
 
   tick: (event) =>
-    # console.log "tick"
+    while @queue.queue('prio').length
+      @queue.dequeue('prio')
+      @path_counter += 1
+
     if @queue.queue('move').length
       @queue.dequeue('move')
       # console.log "deq", @queue.queue("move").length
@@ -211,6 +249,11 @@ class Turtle
         @path_counter = 0
         @stage.getChildAt(@stage.getNumChildren()-2).cache(0,0,600,600)
         @newpath()
+    else
+      f() for f in @turtleupdates['idle']
+    @currentQueue = 'prio'
+    f() for f in @turtleupdates['always']
+    @currentQueue = 'move'
     @stage.update(event)
 
   speed: (speed) =>
@@ -410,6 +453,13 @@ window._IFS = _IFS
     versteckeigel = turtle.hideturtle
     zeigeigel = turtle.showturtle
     geschwindigkeit = turtle.speed
+    neuerpfad = turtle.newpath
+    berührt = turtle.hitTest
+    aktualisiere = (typ, f) ->
+      if typ == 'immer'
+        turtle.queue.queue 'move', (next) ->
+          turtle.turtleupdates['always'].push f
+      if typ == 'leerlauf' then turtle.turtleupdates['idle'].push f
     plot = turtle.plot
     plotfarbe = (farbe) ->
       turtle.plotColor = farbe
@@ -600,6 +650,7 @@ window._IFS = _IFS
 
     $('#stopbutton').click ->
       geschwindigkeit 20
+      turtle.turtleupdates = {'always': [], 'idle': []}
       turtle.queue.clearQueue 'move'
       new PNotify { title: 'Stop', text: 'Skript angehalten.', type: 'warning' }
     $('#clearbutton').click ->
