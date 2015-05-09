@@ -207,7 +207,7 @@ class Turtle
       # console.log "deq", @queue.queue("move").length
       @path_counter += 1
       if @allow_caching and @path_counter > 500
-        # Start a new path every 100 steps so that we can use caching.
+        # Start a new path so that we can use caching.
         @path_counter = 0
         @stage.getChildAt(@stage.getNumChildren()-2).cache(0,0,600,600)
         @newpath()
