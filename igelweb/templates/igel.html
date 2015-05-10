@@ -214,19 +214,22 @@ class Turtle
       @update()
       @newpath()
 
-  newpath: (name = '') =>
+  newpath_q: (name = '') =>
     @pushToCurrentQueue (next) =>
-      if @g then @g.endStroke()
-      @g = new createjs.Graphics()
-      @g.beginStroke(@penColor)
-      @g.moveTo @x, @y
-      @g.setStrokeStyle(@strokeStyle)
-      shp = new createjs.Shape(@g)
-      if name != ''
-        shp.name = name
-      @stage.addChildAt shp, @stage.getNumChildren()-1 # add new path right below turtle
-      @g.lineTo @x, @y # forward 0 # strangely, this seems to be needed with current EaselJS version to "activate" g?!
-      @stage.update()
+      @newpath name
+
+  newpath: (name = '') =>
+    if @g then @g.endStroke()
+    @g = new createjs.Graphics()
+    @g.beginStroke(@penColor)
+    @g.moveTo @x, @y
+    @g.setStrokeStyle(@strokeStyle)
+    shp = new createjs.Shape(@g)
+    if name != ''
+      shp.name = name
+    @stage.addChildAt shp, @stage.getNumChildren()-1 # add new path right below turtle
+    @g.lineTo @x, @y # forward 0 # strangely, this seems to be needed with current EaselJS version to "activate" g?!
+    @stage.update()
 
   home: =>
     @pushToCurrentQueue (next) =>
@@ -457,7 +460,7 @@ window._IFS = _IFS
     versteckeigel = turtle.hideturtle
     zeigeigel = turtle.showturtle
     geschwindigkeit = turtle.speed
-    neuerpfad = turtle.newpath
+    neuerpfad = turtle.newpath_q
     berührt = turtle.hitTest
     nachricht = (text) ->
       turtle.queue.queue 'move', -> alert text
