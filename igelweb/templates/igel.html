@@ -487,8 +487,6 @@ window._IFS = _IFS
     geschwindigkeit 20
 
     $('#canvas').attr 'tabindex', 0
-    fokus = ->
-      $('#canvas').focus()
     taste = (key, fct) ->
       $('#canvas').bind 'keydown', key, fct
 
@@ -591,6 +589,7 @@ window._IFS = _IFS
     # führe den code in der entsprechenden textarea aus
     run_textarea = (ta) =>
       # console.log 'run'
+      $('#canvas').focus()
       try
         window.compiledJS = CoffeeScript.compile ta.val(), bare: on
       catch error
@@ -662,7 +661,6 @@ window._IFS = _IFS
         canvasmode = false
       bildschirmleer()
       geschwindigkeit 20
-      fokus()
 
 {% if key %}
   {% if user.is_authenticated %}
