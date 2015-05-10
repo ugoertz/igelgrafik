@@ -90,6 +90,11 @@ class Turtle
     @turtle.y = @y
     @turtle.rotation = @angle
 
+  stop: ->
+    @turtleupdates = {'always': [], 'idle': []}
+    @queue.clearQueue 'move'
+    @queue.clearQueue 'prio'
+
   forwardPos: (distance) ->
     x = (Math.sin(@angle / 180 * Math.PI) * distance) + @x
     y = (Math.cos(@angle / 180 * Math.PI) * (-distance)) + @y
@@ -100,7 +105,6 @@ class Turtle
       toPos = @forwardPos distance
       if @isPendown
         @g.lineTo(toPos.x, toPos.y)
-        # console.log 'fw', toPos.x, toPos.y
       else
         @g.moveTo(toPos.x, toPos.y)
       @x = toPos.x
@@ -455,6 +459,8 @@ window._IFS = _IFS
     geschwindigkeit = turtle.speed
     neuerpfad = turtle.newpath
     berührt = turtle.hitTest
+    nachricht = (text) ->
+      turtle.queue.queue 'move', -> alert text
     aktualisiere = (typ, f) ->
       if typ == 'immer'
         turtle.queue.queue 'move', (next) ->
@@ -649,8 +655,7 @@ window._IFS = _IFS
 
     $('#stopbutton').click ->
       geschwindigkeit 20
-      turtle.turtleupdates = {'always': [], 'idle': []}
-      turtle.queue.clearQueue 'move'
+      turtle.stop()
       new PNotify { title: 'Stop', text: 'Skript angehalten.', type: 'warning' }
     $('#clearbutton').click ->
       if canvasmode
@@ -660,6 +665,7 @@ window._IFS = _IFS
           turtle.plotColor = farbe
         canvasmode = false
       bildschirmleer()
+      $('#canvas').unbind 'keydown'
       geschwindigkeit 20
 
 {% if key %}
