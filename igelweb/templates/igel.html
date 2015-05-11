@@ -56,8 +56,6 @@ class Turtle
     @currentQueue = 'move'
 
     @path_counter = 0
-    @clear()
-    @ticker = createjs.Ticker.on("tick", this.tick, this)
     @allow_caching = true
 
     # @turtleupdates contains two lists of functions. The functions in the
@@ -66,6 +64,8 @@ class Turtle
     # executed in the tick function when the queue is empty.
     @turtleupdates = {'always': [], 'idle': []}
     @g = null
+    @clear()
+    @ticker = createjs.Ticker.on("tick", this.tick, this)
 
   pushToCurrentQueue: (f) ->
     @queue.queue @currentQueue, f
