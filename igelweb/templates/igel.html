@@ -3,6 +3,9 @@
 {% load staticfiles %}
 
 {% block head %}
+{# LCD web font (not free, hence not included in GIT repo) #}
+<link rel="stylesheet" href="{% static "fonts/LCD-stylesheet.css" %}" type="text/css">
+
 <style type="text/css">
     textarea {
         font-family:courier;
@@ -36,6 +39,64 @@ $.ajaxSetup({
 
 
 <script type="text/coffeescript">
+
+class Scoreboard
+    constructor: ->
+        @score = 0
+
+    show: =>
+        $('#scb').show()
+
+    hide: =>
+        $('#scb').hide()
+
+    setScore: (s) =>
+        @show()
+        @score = s
+        @updateScore()
+
+    getScore: =>
+        @score
+
+    addToScore: (s=1) =>
+        @score += s
+        @updateScore()
+
+    subtractFromScore: (s=1) =>
+        @addToScore -s
+
+    updateScore: =>
+        $('#scb-scoreboard').html "<span class=\"score\">#{@score}</span>"
+
+    message: (m) =>
+        @show()
+        $('#scb-messages').prepend "<p>#{m}</p>"
+
+
+    updateTimer: =>
+        $('#scb-timer').html "#{ @countdown // 60 }:#{ if (@countdown % 60 < 10) then 0 else '' }#{ @countdown % 60 }"
+
+    countdownTick: =>
+        @countdown -= 1
+        @updateTimer()
+        if @countdown is 0
+          @stopCountdown()
+          if @ctd_function isnt null
+            @ctd_function()
+
+    startCountdown: (sec, f=null) =>
+        @stopCountdown()
+        @show()
+        @countdown = sec
+        @ctd_function = f
+        @updateTimer()
+        @ctd_int = setInterval(@countdownTick, 1000)
+
+    stopCountdown: ->
+        if @ctd_int?
+            clearInterval(@ctd_int)
+
+window.Scoreboard = Scoreboard
 
 class Turtle
   constructor: (w, h, @canvas) ->
@@ -442,6 +503,9 @@ window._IFS = _IFS
     wiederhole = (n, f) -> f() für i in [1..n]
     würfel = (l) -> l[Math.floor(Math.random() * l.length)]
 
+    scb = new Scoreboard()
+    scb.hide()
+
     turtle = new Turtle 600, 600, $('#canvas')[0]
     vor = turtle.forward
     zurück = turtle.backward
@@ -459,11 +523,31 @@ window._IFS = _IFS
     nachhause = turtle.home
     versteckeigel = turtle.hideturtle
     zeigeigel = turtle.showturtle
+
     geschwindigkeit = turtle.speed
+
     neuerpfad = turtle.newpath_q
     berührt = turtle.hitTest
-    nachricht = (text) ->
+
+
+    nachricht_a = (text) ->
       turtle.queue.queue 'move', -> alert text
+    nachricht = (text) ->
+      turtle.queue.queue 'move', -> scb.message text
+
+    countdown_start = (sec, f=null) ->
+      turtle.queue.queue 'move', -> scb.startCountdown(sec, f)
+    countdown_stop = ->
+      turtle.queue.queue 'move', -> scb.stopCountdown()
+
+    punkte = scb.getScore
+    setzepunkte = (p=0) ->
+      turtle.queue.queue 'move', -> scb.setScore p
+    punkteplus = (p=1) ->
+      turtle.queue.queue 'move', -> scb.addToScore p
+    punkteminus = (p=1) ->
+      turtle.queue.queue 'move', -> scb.subtractFromScore p
+
     aktualisiere = (typ, f) ->
       if typ == 'immer'
         turtle.queue.queue 'move', (next) ->
@@ -659,6 +743,7 @@ window._IFS = _IFS
     $('#stopbutton').click ->
       geschwindigkeit 20
       turtle.stop()
+      scb.stopCountdown()
       new PNotify { title: 'Stop', text: 'Skript angehalten.', type: 'warning' }
     $('#clearbutton').click ->
       if canvasmode
@@ -692,6 +777,15 @@ window._IFS = _IFS
 <div class="row">
     <div class="col-md-7">
         <canvas id='canvas' style="border:1px solid gray; width:600px; height:600px; background-color:white; position:fixed;"></canvas>
+        <div id="scb" style="width: 600px; min-height: 100px; background-color: #eeeeee; margin-top: 630px; position: fixed;">
+            <div class="row">
+                <div class="col-md-10" style="min-height: 100px; height: 150px; background-color: #eeeeee; overflow-y: scroll;" id="scb-messages"></div>
+                <div class="col-md-2" style="background-color: yellow; min-height: 100px; height: 150px;">
+                    <div id="scb-timer" style="font-family: lcd_fontregular, courier; font-size: 150%"></div>
+                    <div id="scb-scoreboard" style="font-size: 150%"></div>
+                </div>
+            </div>
+        </div>
         <div style="margin-top:300px; margin-bottom:200px;">.</div>
     </div>
     <div class="col-md-5">
