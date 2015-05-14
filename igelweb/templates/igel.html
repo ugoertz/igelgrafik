@@ -128,10 +128,10 @@ class Turtle
     @clear()
     @ticker = createjs.Ticker.on("tick", this.tick, this)
 
-  pushToCurrentQueue: (f) ->
+  pushToCurrentQueue: (f) =>
     @queue.queue @currentQueue, f
 
-  hitTest: (name) ->
+  hitTest: (name) =>
     s = @stage.getChildByName(name)
     if not s then return false
 
@@ -146,17 +146,17 @@ class Turtle
       if s.hitTest(pt.x, pt.y) then return true
     false
 
-  update: ->
+  update: =>
     @turtle.x = @x
     @turtle.y = @y
     @turtle.rotation = @angle
 
-  stop: ->
+  stop: =>
     @turtleupdates = {'always': [], 'idle': []}
     @queue.clearQueue 'move'
     @queue.clearQueue 'prio'
 
-  forwardPos: (distance) ->
+  forwardPos: (distance) =>
     x = (Math.sin(@angle / 180 * Math.PI) * distance) + @x
     y = (Math.cos(@angle / 180 * Math.PI) * (-distance)) + @y
     return {x: x, y: y }
@@ -250,6 +250,7 @@ class Turtle
     # @queue.queue 'move', (next) =>
       # console.log 'clear'
       @queue.clearQueue('move')
+      $('#canvas').unbind 'keydown'
       @x = @homepos.x
       @y = @homepos.y
       @angle = @homepos.angle
@@ -547,6 +548,12 @@ window._IFS = _IFS
       turtle.queue.queue 'move', -> scb.addToScore p
     punkteminus = (p=1) ->
       turtle.queue.queue 'move', -> scb.subtractFromScore p
+    stopskript = ->
+      turtle.queue.queue "move", ->
+        geschwindigkeit 20
+        turtle.stop()
+        scb.stopCountdown()
+        $('#canvas').unbind 'keydown'
 
     aktualisiere = (typ, f) ->
       if typ == 'immer'
@@ -743,6 +750,7 @@ window._IFS = _IFS
     $('#stopbutton').click ->
       geschwindigkeit 20
       turtle.stop()
+      $('#canvas').unbind 'keydown'
       scb.stopCountdown()
       new PNotify { title: 'Stop', text: 'Skript angehalten.', type: 'warning' }
     $('#clearbutton').click ->
@@ -753,7 +761,6 @@ window._IFS = _IFS
           turtle.plotColor = farbe
         canvasmode = false
       bildschirmleer()
-      $('#canvas').unbind 'keydown'
       geschwindigkeit 20
 
 {% if key %}
