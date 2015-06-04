@@ -249,7 +249,7 @@ class Turtle
   clear: =>
     # @queue.queue 'move', (next) =>
       # console.log 'clear'
-      @queue.clearQueue('move')
+      @stop()
       $('#canvas').unbind 'keydown'
       @x = @homepos.x
       @y = @homepos.y
@@ -689,6 +689,7 @@ window._IFS = _IFS
     # führe den code in der entsprechenden textarea aus
     run_textarea = (ta) =>
       # console.log 'run'
+      scb.stopCountdown()
       $('#canvas').focus()
       try
         window.compiledJS = CoffeeScript.compile ta.val(), bare: on
