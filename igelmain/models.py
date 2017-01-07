@@ -163,6 +163,9 @@ class Skript(models.Model):
     bild = models.ImageField(upload_to='userskripte', null=True)
     thumbnail = ImageSpecField([WhiteBackground(), Resize(150, 150), ], source='bild', format='png', )
 
+    def __unicode__(self):
+        return '%s: %s (%d)' % (self.ud.user.email, self.key, len(self.skript))
+
 
 
 @receiver(user_activated)

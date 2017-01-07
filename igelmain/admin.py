@@ -33,3 +33,8 @@ class AufgabeAdmin(admin.ModelAdmin):
         css = {'all': ('css/admin.css', ), }
 
 admin.site.register(Aufgabe, AufgabeAdmin)
+
+
+class SkriptAdmin(admin.ModelAdmin):
+    pass
+admin.site.register(Skript, SkriptAdmin)
