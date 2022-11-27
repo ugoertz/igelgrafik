@@ -73,9 +73,6 @@ ACCOUNT_ACTIVATION_DAYS = 3
 REGISTRATION_AUTO_LOGIN = True
 LOGIN_REDIRECT_URL = '/'
 
-try:
-    from settings_local import *
-except ImportError:
-    pass
+from .settings_local import *
 
 
