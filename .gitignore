@@ -13,8 +13,6 @@ data
 staticroot
 tmp
 
-igelweb/templates/piwik.html
-igelweb/wsgi.py
 igelweb/settings_local.py
 
 igelmain/static/fonts/LCD*
