@@ -1,9 +1,10 @@
 {% extends "registration/registration_base.html" %}
 {% load i18n %}
+{% load static %}
 {% block title %}{% trans "Aktivierung vollständig" %}{% endblock %}
 
 {% block head %}
-<script type="text/javascript" src="{{ STATIC_URL }}js/coffee-script.js"></script>
+<script type="text/javascript" src="{% static 'js/coffee-script.js' %}"></script>
 <script type="text/javascript">
 function csrfSafeMethod(method) {
     // these HTTP methods do not require CSRF protection

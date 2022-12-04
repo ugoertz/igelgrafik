@@ -1,8 +1,9 @@
 {% extends "base.html" %}
 {% load i18n %}
+{% load static %}
 
 {% block head %}
-<link rel="stylesheet" media="all" href="{{ STATIC_URL }}css/docco.css" />
+<link rel="stylesheet" media="all" href="{% static 'css/docco.css' %}" />
 
 <script type="text/javascript">
 $(document).ready(function () {

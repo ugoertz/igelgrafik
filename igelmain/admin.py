@@ -2,7 +2,7 @@ from igelmain.models import Kapitel, Beispiel, Aufgabe, Kategorie, Skript
 from django.contrib import admin
 
 class KapitelAdmin(admin.ModelAdmin):
-    fields = ['titel', 'kategorie', 'platz', 'zusammenfassung', 'quelltext', 'bild', ]
+    fields = ['titel', 'kategorie', 'platz', 'zusammenfassung', 'quelltext', 'doccoHTML', 'bild', ]
 
     class Media:
         css = {'all': ('css/admin.css', ), }

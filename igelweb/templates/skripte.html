@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load i18n %}
+{% load static %}
 
 {% block head %}
 <script type="text/javascript">
@@ -16,7 +17,7 @@ xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
 });
 </script>
 
-<script type="text/javascript" src="{{ STATIC_URL }}js/coffee-script.js"></script>
+<script type="text/javascript" src="{% static 'js/coffee-script.js' %}"></script>
 <script type="text/coffeescript">
 {% if not user.is_authenticated %}
   $(document).ready =>

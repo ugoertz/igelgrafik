@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import base64
 import json
 from django import forms
 from django.http import HttpResponse, HttpResponseRedirect
@@ -8,7 +9,7 @@ from django.contrib import messages
 from django.core.files.base import ContentFile
 #from django.core.serializers.json import DateTimeAwareJSONEncoder
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 from django.template import RequestContext
 from django.core.mail import send_mail, send_mass_mail
 from django.core.exceptions import ObjectDoesNotExist
@@ -28,7 +29,7 @@ class ContactFormCC(ContactForm):
     kopie = forms.BooleanField(help_text='Bitte ankreuzen, wenn Du eine Kopie dieser Email erhalten möchtest', required=False)
 
 def contact(request):
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         CFC = ContactFormCC
     else:
         CFC = ContactForm
@@ -38,7 +39,7 @@ def contact(request):
             recipient_list = settings.SEND_MESSAGES_TO
 
             # evaluate cc_myself
-            if request.user.is_authenticated():
+            if request.user.is_authenticated:
                 if form.cleaned_data['kopie']:
                     recipient_list.append(form.cleaned_data['email'])
 
@@ -55,11 +56,11 @@ def contact(request):
             messages.error(request, 'Bitte berichtige die Fehler unten.')
     else:
         initial = {}
-        if request.user.is_authenticated():
+        if request.user.is_authenticated:
             initial['name'] = request.user.get_full_name()
             initial['email'] = request.user.email
         form = CFC(initial=initial)
-    return render_to_response('contact.html', {'form': form, }, context_instance=RequestContext(request))
+    return render(request, 'contact.html', {'form': form, })
 
 
 # ----------- AJAX to load/save scripts ---------------------------------------------
@@ -101,7 +102,7 @@ def speichern(request):
 
             if 'img' in request.POST:
                 img_data = request.POST['img'].replace("data:image/png;base64,", "")
-                f = ContentFile(img_data.decode("base64"))
+                f = ContentFile(base64.b64decode(img_data))
                 skript.bild.save('img_' + str(skript.id) + '.png', f)
         elif 'skriptliste' in request.POST:
             for key, skr in json.loads(request.POST['skriptliste']):
@@ -124,64 +125,65 @@ def skriptloeschen(request, id):
 # ----------- View Code -------------------------------------------------------------
 
 def skripte(request):
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         try:
             ud = request.user.userdata
             skripte = Skript.objects.filter(ud=ud)
-            return render_to_response('skripte.html', { 'skripte': skripte }, context_instance=RequestContext(request))
+            print('Skripte:', len(skripte))
+            return render(request, 'skripte.html', { 'skripte': skripte })
         except:
             pass
-    return render_to_response('skripte.html', { }, context_instance=RequestContext(request))
+    return render(request, 'skripte.html', { })
 
 
 def zeige_lokales_skript(request, key):
-    return render_to_response('igel.html', { 'key': key, }, context_instance=RequestContext(request))
+    return render(request, 'igel.html', { 'key': key, })
 
 @login_required
 def zeige_skript(request, id):
     try:
         skript = request.user.userdata.skript_set.get(id=id)
-        return render_to_response('igel.html', { 'key': skript.key, 'skript': skript.skript, }, context_instance=RequestContext(request))
+        return render(request, 'igel.html', { 'key': skript.key, 'skript': skript.skript, })
     except:
-        return render_to_response('igel.html', { }, context_instance=RequestContext(request))
+        return render(request, 'igel.html')
 
 
 def zeige_kapitel(request, id):
     kapitel = Kapitel.objects.get(id=int(id))
-    return render_to_response('tutorial.html', { 'kapitel': kapitel, 'typ': 'tutorial', }, context_instance=RequestContext(request))
+    return render(request, 'tutorial.html', { 'kapitel': kapitel, 'typ': 'tutorial', })
 
 def igel_kapitel(request, id):
     kapitel = Kapitel.objects.get(id=int(id))
     quelltext = '\n'.join([l for l in kapitel.quelltext.split('\n') if not l.startswith('#')])
-    return render_to_response('igel.html', { 'skript': quelltext }, context_instance=RequestContext(request))
+    return render(request, 'igel.html', { 'skript': quelltext })
 
 def uebersicht(request):
     kapitelliste = Kapitel.objects.all().order_by('kategorie', 'platz')
-    return render_to_response('uebersicht.html', {'kapitelliste': kapitelliste, }, context_instance=RequestContext(request))
+    return render(request, 'uebersicht.html', {'kapitelliste': kapitelliste, })
 
 
 # ------------ Aufgaben ----------------------------------------------------------
 
 def aufgaben(request):
     aufgabenliste = Aufgabe.objects.all().order_by('kategorie', 'platz')
-    return render_to_response('aufgaben.html', {'aufgabenliste': aufgabenliste, }, context_instance=RequestContext(request))
+    return render(request, 'aufgaben.html', {'aufgabenliste': aufgabenliste, })
 
 def zeige_aufgabe(request, id):
     aufgabe = Aufgabe.objects.get(id=int(id))
-    return render_to_response('aufgabe.html', { 'aufgabe': aufgabe, }, context_instance=RequestContext(request))
+    return render(request, 'aufgabe.html', { 'aufgabe': aufgabe, })
 
 # ------------- Gallerie ----------------------------------------------------------
 
 def gallerie(request):
     beispielliste = Beispiel.objects.all().order_by('-updated')
-    return render_to_response('gallerie.html', {'categories': Kategorie.objects.all().order_by('position'), }, context_instance=RequestContext(request))
+    return render(request, 'gallerie.html', {'categories': Kategorie.objects.all().order_by('position'), })
 
 def zeige_beispiel(request, id):
     beispiel = Beispiel.objects.get(id=int(id))
-    return render_to_response('tutorial.html', { 'kapitel': beispiel, 'typ': 'beispiel', }, context_instance=RequestContext(request))
+    return render(request, 'tutorial.html', { 'kapitel': beispiel, 'typ': 'beispiel', })
 
 def igel_beispiel(request, id):
     beispiel = Beispiel.objects.get(id=int(id))
     quelltext = '\n'.join([l for l in beispiel.quelltext.split('\n') if not l.startswith('# ')])
-    return render_to_response('igel.html', { 'skript': quelltext }, context_instance=RequestContext(request))
+    return render(request, 'igel.html', { 'skript': quelltext })
 

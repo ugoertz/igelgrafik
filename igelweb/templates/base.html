@@ -1,5 +1,5 @@
 {% load i18n %}
-{% load staticfiles %}
+{% load static %}
 
 <!DOCTYPE html>
 <!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
@@ -14,6 +14,52 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="stylesheet" href="{% static "css/bootstrap.min.css" %}">
         <link href="{% static "css/pnotify.custom.min.css" %}" media="all" rel="stylesheet" type="text/css" />
+
+        <style>
+        /* cabin-regular - latin-ext_latin */
+        @font-face {
+          font-family: 'Cabin';
+          font-style: normal;
+          font-weight: 400;
+          src: url('{% static "fonts/cabin-v26-latin-ext_latin-regular.eot" %}'); /* IE9 Compat Modes */
+          src: local(''),
+              url('{% static "fonts/cabin-v26-latin-ext_latin-regular.eot?#iefix" %}') format('embedded-opentype'), /* IE6-IE8 */
+              url('{% static "fonts/cabin-v26-latin-ext_latin-regular.woff2" %}') format('woff2'), /* Super Modern Browsers */
+              url('{% static "fonts/cabin-v26-latin-ext_latin-regular.woff" %}') format('woff'), /* Modern Browsers */
+              url('{% static "fonts/cabin-v26-latin-ext_latin-regular.ttf" %}') format('truetype'), /* Safari, Android, iOS */
+              url('{% static "fonts/cabin-v26-latin-ext_latin-regular.svg#Cabin" %}') format('svg'); /* Legacy iOS */
+        }
+
+        /* cabin-700 - latin-ext_latin */
+        @font-face {
+          font-family: 'Cabin';
+          font-style: normal;
+          font-weight: 700;
+          src: url('{% static "fonts/cabin-v26-latin-ext_latin-700.eot" %}'); /* IE9 Compat Modes */
+          src: local(''),
+              url('{% static "fonts/cabin-v26-latin-ext_latin-700.eot?#iefix" %}') format('embedded-opentype'), /* IE6-IE8 */
+              url('{% static "fonts/cabin-v26-latin-ext_latin-700.woff2" %}') format('woff2'), /* Super Modern Browsers */
+              url('{% static "fonts/cabin-v26-latin-ext_latin-700.woff" %}') format('woff'), /* Modern Browsers */
+              url('{% static "fonts/cabin-v26-latin-ext_latin-700.ttf" %}') format('truetype'), /* Safari, Android, iOS */
+              url('{% static "fonts/cabin-v26-latin-ext_latin-700.svg#Cabin" %}') format('svg'); /* Legacy iOS */
+        }
+
+        /* cabin-italic - latin-ext_latin */
+        @font-face {
+          font-family: 'Cabin';
+          font-style: italic;
+          font-weight: 400;
+          src: url('{% static "fonts/cabin-v26-latin-ext_latin-italic.eot" %}'); /* IE9 Compat Modes */
+          src: local(''),
+              url('{% static "fonts/cabin-v26-latin-ext_latin-italic.eot?#iefix" %}') format('embedded-opentype'), /* IE6-IE8 */
+              url('{% static "fonts/cabin-v26-latin-ext_latin-italic.woff2" %}') format('woff2'), /* Super Modern Browsers */
+              url('{% static "fonts/cabin-v26-latin-ext_latin-italic.woff" %}') format('woff'), /* Modern Browsers */
+              url('{% static "fonts/cabin-v26-latin-ext_latin-italic.ttf" %}') format('truetype'), /* Safari, Android, iOS */
+              url('{% static "fonts/cabin-v26-latin-ext_latin-italic.svg#Cabin" %}') format('svg'); /* Legacy iOS */
+        }
+        </style>
+
+
         <link href='http://fonts.googleapis.com/css?family=Cabin:400,400italic,700' rel='stylesheet' type='text/css'>
         <link rel="stylesheet" href="{% static "css/main.css" %}">
 

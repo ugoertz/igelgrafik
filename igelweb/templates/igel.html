@@ -1,10 +1,8 @@
 {% extends "base.html" %}
 {% load i18n %}
-{% load staticfiles %}
+{% load static %}
 
 {% block head %}
-{# LCD web font (not free, hence not included in GIT repo) #}
-<link rel="stylesheet" href="{% static "fonts/LCD-stylesheet.css" %}" type="text/css">
 
 <style type="text/css">
     textarea {
@@ -789,7 +787,7 @@ window._IFS = _IFS
             <div class="row">
                 <div class="col-md-10" style="min-height: 100px; height: 150px; background-color: #eeeeee; overflow-y: scroll;" id="scb-messages"></div>
                 <div class="col-md-2" style="background-color: yellow; min-height: 100px; height: 150px;">
-                    <div id="scb-timer" style="font-family: lcd_fontregular, courier; font-size: 150%"></div>
+                    <div id="scb-timer" style="font-family: courier; font-size: 150%"></div>
                     <div id="scb-scoreboard" style="font-size: 150%"></div>
                 </div>
             </div>
@@ -810,7 +808,7 @@ window._IFS = _IFS
                 <button id="stopbutton" style="margin-left: 10px;" class="btn btn-danger pull-right">Stop</button>
                 <button id="clearbutton" style="margin-left: 10px;" class="btn btn-info pull-right" >Bildschirm löschen</button>
             </div>
-            {% if user.is_authenticated %}<span style="width: 100px;" class="input-group-addon"><input id="saveimg" type="checkbox" aria-label="Mit Bild speichern" checked><span style="padding-left: 10px;">Mit Bild abspeichern</span></span>{% endif %}
+            {% if user.is_authenticated %}<span style="width: 100px; border: none; background-color: white;" class="input-group-addon"><input id="saveimg" type="checkbox" aria-label="Mit Bild speichern" checked><span style="padding-left: 10px;">Mit Bild abspeichern</span></span>{% endif %}
         </div>
         <div class="row">
             <div class="runigel">

@@ -83,7 +83,7 @@ class Beispiel(models.Model):
     docbild = ImageSpecField([WhiteBackground(), Resize(400, 400), ], source='bild', format='JPEG', )
     thumbnail = ImageSpecField([WhiteBackground(), Resize(200, 200), ], source='bild', format='JPEG', )
     updated = models.DateTimeField(auto_now=True)
-    category = models.ForeignKey(Kategorie, null=True, blank=True)
+    category = models.ForeignKey(Kategorie, null=True, blank=True, on_delete=models.CASCADE)
 
     def __unicode__(self):
         return u'%s (%s)' % (self.titel, unicode(self.updated))
@@ -153,13 +153,13 @@ class Aufgabe(models.Model):
 
 
 class Userdata(models.Model):
-    user = models.OneToOneField(User)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
 
 
 class Skript(models.Model):
     key = models.CharField(max_length=20)
     skript = models.TextField(max_length=2000)
-    ud = models.ForeignKey(Userdata)
+    ud = models.ForeignKey(Userdata, on_delete=models.CASCADE)
     bild = models.ImageField(upload_to='userskripte', null=True)
     thumbnail = ImageSpecField([WhiteBackground(), Resize(150, 150), ], source='bild', format='png', )
 
