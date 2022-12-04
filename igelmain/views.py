@@ -128,8 +128,8 @@ def skripte(request):
     if request.user.is_authenticated:
         try:
             ud = request.user.userdata
-            skripte = Skript.objects.filter(ud=ud)
-            print('Skripte:', len(skripte))
+            skripte = Skript.objects.filter(ud=ud).order_by('key')
+            # print('Skripte:', len(skripte))
             return render(request, 'skripte.html', { 'skripte': skripte })
         except:
             pass
